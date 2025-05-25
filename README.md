@@ -1,2 +1,7 @@
 # youtube_downloader
-UI tool for downloading YouTube videos (MP4 files), or audios (MP3 files)
+UI for downloading youtube videos in either MP3 or MP4 format using yt-dlp
+
+# Dependencies
+
+yt-dpl
+ffmpeg
