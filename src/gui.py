@@ -1,48 +1,146 @@
+# gui.py
+
 import tkinter as tk
-from tkinter import messagebox, colorchooser
+from tkinter import filedialog, messagebox
+from backend import download_video
+import threading
 
-def greet_user():
-    name = name_entry.get()
-    if name:
-        greeting_label.config(text=f"Hello, {name}!")
-    else:
-        messagebox.showwarning("Input Error", "Please enter your name.")
+class YouTubeDownloaderUI(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("YouTube Downloader")
+        self.geometry("700x400")
+        self.resizable(False, False)
 
-def show_selected_option():
-    choice = option_var.get()
-    messagebox.showinfo("You Selected", f"You selected: {choice}")
+        self.grid_columnconfigure(0, weight=1, uniform="group1")
+        self.grid_columnconfigure(1, weight=2, uniform="group1")
 
-def toggle_dark_mode():
-    bg = "#333" if dark_mode_var.get() else "#fff"
-    fg = "#fff" if dark_mode_var.get() else "#000"
-    root.config(bg=bg)
-    for widget in root.winfo_children():
-        widget.config(bg=bg, fg=fg)
+        self.create_widgets()
 
-# Main Window
-root = tk.Tk()
-root.title("Tkinter Showcase")
-root.geometry("400x450")
+    def create_widgets(self):
+        self.create_left_panel()
+        self.create_right_panel()
 
-# Greeting section
-tk.Label(root, text="Enter your name:").pack(pady=(10, 0))
-name_entry = tk.Entry(root)
-name_entry.pack()
+    def create_left_panel(self):
+        frame = tk.Frame(self, padx=10, pady=10)
+        frame.grid(row=0, column=0, sticky="nsew")
 
-tk.Button(root, text="Greet Me", command=greet_user).pack(pady=5)
-greeting_label = tk.Label(root, text="", font=("Arial", 12, "bold"))
-greeting_label.pack()
+        tk.Label(frame, text="Output Folder:").pack(anchor="w")
+        self.output_path_var = tk.StringVar()
+        tk.Label(frame, textvariable=self.output_path_var, relief="sunken", width=30).pack(fill="x", pady=(0, 10))
+        tk.Button(frame, text="Browse...", command=self.select_output_folder).pack(fill="x")
 
-# Radio Buttons
-option_var = tk.StringVar(value="Option 1")
-tk.Label(root, text="Choose an option:").pack(pady=(15, 0))
-for option in ["Option 1", "Option 2", "Option 3"]:
-    tk.Radiobutton(root, text=option, variable=option_var, value=option).pack(anchor='w')
+        tk.Label(frame, text="Download Format:").pack(anchor="w", pady=(20, 0))
+        self.mp3_var = tk.BooleanVar(value=True)
+        self.mp4_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(frame, text="MP3", variable=self.mp3_var).pack(anchor="w")
+        tk.Checkbutton(frame, text="MP4", variable=self.mp4_var).pack(anchor="w")
 
-tk.Button(root, text="Show Selected Option", command=show_selected_option).pack(pady=5)
+        button_frame = tk.Frame(frame)
+        button_frame.pack(fill="x", pady=(20, 0))
+        tk.Button(button_frame, text="Start", command=self.start_download).pack(side="left", expand=True, fill="x", padx=(0, 5))
+        tk.Button(button_frame, text="Cancel", command=self.cancel_download).pack(side="left", expand=True, fill="x", padx=(5, 0))
 
-# Checkbutton
-dark_mode_var = tk.BooleanVar()
-tk.Checkbutton(root, text="Enable Dark Mode", variable=dark_mode_var, command=toggle_dark_mode).pack(pady=10)
+    def create_right_panel(self):
+        frame = tk.Frame(self, padx=10, pady=10)
+        frame.grid(row=0, column=1, sticky="nsew")
 
-root.mainloop()
+        tk.Label(frame, text="Video URLs:").pack(anchor="w")
+        list_frame = tk.Frame(frame)
+        list_frame.pack(fill="both", expand=True)
+
+        self.urls_listbox = tk.Listbox(list_frame)
+        self.urls_listbox.pack(side="left", fill="both", expand=True)
+
+        scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=self.urls_listbox.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.urls_listbox.config(yscrollcommand=scrollbar.set)
+
+        entry_frame = tk.Frame(frame)
+        entry_frame.pack(fill="x", pady=(10, 0))
+        self.url_entry = tk.Entry(entry_frame)
+        self.url_entry.pack(side="left", fill="x", expand=True)
+        tk.Button(entry_frame, text="Add", command=self.add_url).pack(side="left", padx=(5, 0))
+
+    def select_output_folder(self):
+        path = filedialog.askdirectory()
+        if path:
+            self.output_path_var.set(path)
+
+    def add_url(self):
+        url = self.url_entry.get().strip()
+        if url:
+            self.urls_listbox.insert(tk.END, url)
+            self.url_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Input Error", "Please enter a valid URL.")
+
+    
+
+    def start_download(self):
+        selected_format_mp3 = self.mp3_var.get()
+        selected_format_mp4 = self.mp4_var.get()
+        output_path = self.output_path_var.get()
+
+        if not output_path:
+            messagebox.showwarning("Output Folder", "Please select an output folder.")
+            return
+
+        if not (selected_format_mp3 or selected_format_mp4):
+            messagebox.showwarning("Format", "Please select at least one download format (MP3 or MP4).")
+            return
+
+        # Run in a background thread
+        threading.Thread(target=self._process_download_queue, args=(selected_format_mp3, selected_format_mp4, output_path), daemon=True).start()
+
+    def _process_download_queue(self, as_mp3, as_mp4, output_path):
+        total = self.urls_listbox.size()
+        index = 0
+
+        while self.urls_listbox.size() > 0:
+            url = self.urls_listbox.get(0)
+
+            try:
+                download_video(
+                    url=url,
+                    output_path=output_path,
+                    #as_mp3=as_mp3,
+                    #as_mp4=as_mp4,
+                    #progress_hook=self.print_progress
+                )
+            except Exception as e:
+                messagebox.showerror("Download Error", f"Error downloading:\n{url}\n\n{str(e)}")
+            finally:
+                # Remove from Listbox after processing
+                self.urls_listbox.delete(0)
+
+        messagebox.showinfo("Download Complete", "All downloads have been processed.")
+
+
+
+    # def start_download(self):
+    #     selected_format_mp3 = self.mp3_var.get()
+    #     selected_format_mp4 = self.mp4_var.get()
+    #     output_path = self.output_path_var.get()
+
+    #     for i in range(self.urls_listbox.size()):
+    #         url = self.urls_listbox.get(i)
+    #         try:
+    #             download_video(
+    #                 url=url,
+    #                 output_path=output_path,
+    #                 #as_mp3=selected_format_mp3,
+    #                 #as_mp4=selected_format_mp4,
+    #                 #progress_hook=self.print_progress
+    #             )
+    #         except Exception as e:
+    #             messagebox.showerror("Download Error", str(e))
+
+    def cancel_download(self):
+        # Placeholder for cancellation logic
+        messagebox.showinfo("Cancel", "Download cancelled.")
+
+    def print_progress(self, d):
+        #print(d)  # You can update this to a real progress bar later
+        print(f"Progress: {d.get('downloaded_bytes', 0)} bytes downloaded.")
+

@@ -1,16 +1,7 @@
-import yt_dlp
+# main.py
 
-url = "https://youtu.be/2lAe1cqCOXo?si=_aQhUb8lkYcwGYGr"
+from gui import YouTubeDownloaderUI
 
-options = {
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-    'outtmpl': '%(title)s.%(ext)s',
-}
-
-with yt_dlp.YoutubeDL(options) as ydl:
-    ydl.download([url])
+if __name__ == '__main__':
+    app = YouTubeDownloaderUI()
+    app.mainloop()
