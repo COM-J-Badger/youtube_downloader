@@ -97,6 +97,8 @@ class YouTubeDownloaderUI(tk.Tk):
         total = self.urls_listbox.size()
         index = 0
 
+        error_urls = []
+
         while self.urls_listbox.size() > 0:
             url = self.urls_listbox.get(0)
 
@@ -109,12 +111,20 @@ class YouTubeDownloaderUI(tk.Tk):
                     #progress_hook=self.print_progress
                 )
             except Exception as e:
-                messagebox.showerror("Download Error", f"Error downloading:\n{url}\n\n{str(e)}")
+                #messagebox.showerror("Download Error", f"Error downloading:\n{url}\n\n{str(e)}")
+                error_urls.append(url)
             finally:
                 # Remove from Listbox after processing
                 self.urls_listbox.delete(0)
 
-        messagebox.showinfo("Download Complete", "All downloads have been processed.")
+        messagebox.showinfo(f"Download Complete", f"{total} URLs processed.\n" \
+        f"Errors: {len(error_urls)}" if error_urls else "All downloads completed successfully.")
+
+        f = open(f"{output_path}/errors.txt", "a")
+        for url in error_urls:
+            f.write(f"{url}\n")
+            f.close()
+        messagebox.showinfo("Errors", f"Error URLs saved to {output_path}/errors.txt")
 
 
 
