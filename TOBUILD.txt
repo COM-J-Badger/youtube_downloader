@@ -1,0 +1,3 @@
+Run: (Change file path depending on directory of terminal)
+
+pyinstaller --onefile --noconsole main.py

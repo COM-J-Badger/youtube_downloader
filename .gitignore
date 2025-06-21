@@ -1,2 +1,4 @@
 TOOLS/
 kivy_venv/
+src/build/
+src/dist/
