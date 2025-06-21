@@ -10,7 +10,6 @@ class YouTubeDownloaderUI(tk.Tk):
         super().__init__()
         self.title("YouTube Downloader")
         self.geometry("700x400")
-        self.resizable(False, False)
 
         self.grid_columnconfigure(0, weight=1, uniform="group1")
         self.grid_columnconfigure(1, weight=2, uniform="group1")
