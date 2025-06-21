@@ -117,34 +117,16 @@ class YouTubeDownloaderUI(tk.Tk):
                 # Remove from Listbox after processing
                 self.urls_listbox.delete(0)
 
-        messagebox.showinfo(f"Download Complete", f"{total} URLs processed.\n" \
+        messagebox.showinfo(f"Download Complete", f"{total} URLs processed.\n"
         f"Errors: {len(error_urls)}" if error_urls else "All downloads completed successfully.")
 
-        f = open(f"{output_path}/errors.txt", "a")
-        for url in error_urls:
-            f.write(f"{url}\n")
-            f.close()
-        messagebox.showinfo("Errors", f"Error URLs saved to {output_path}/errors.txt")
+        if error_urls:
+            f = open(f"{output_path}/errors.txt", "a")
+            for url in error_urls:
+                f.write(f"{url}\n")
+                f.close()
+            messagebox.showinfo("Errors", f"Error URLs saved to {output_path}/errors.txt")
 
-
-
-    # def start_download(self):
-    #     selected_format_mp3 = self.mp3_var.get()
-    #     selected_format_mp4 = self.mp4_var.get()
-    #     output_path = self.output_path_var.get()
-
-    #     for i in range(self.urls_listbox.size()):
-    #         url = self.urls_listbox.get(i)
-    #         try:
-    #             download_video(
-    #                 url=url,
-    #                 output_path=output_path,
-    #                 #as_mp3=selected_format_mp3,
-    #                 #as_mp4=selected_format_mp4,
-    #                 #progress_hook=self.print_progress
-    #             )
-    #         except Exception as e:
-    #             messagebox.showerror("Download Error", str(e))
 
     def cancel_download(self):
         # Placeholder for cancellation logic
