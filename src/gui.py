@@ -1,6 +1,7 @@
 # gui.py
 
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog, messagebox
 from backend import download_video
 import threading
@@ -12,9 +13,15 @@ class YouTubeDownloaderUI(tk.Tk):
         self.geometry("700x400")
 
         self.grid_columnconfigure(0, weight=1, uniform="group1")
-        self.grid_columnconfigure(1, weight=2, uniform="group1")
+        self.grid_columnconfigure(1, weight=1, uniform="group1")
 
         self.create_widgets()
+
+        self.iconphoto(False, tk.PhotoImage(file="./assets/D_ Icon Cropped.png"))
+
+        self.progress_bar = ttk.Progressbar(self, orient="horizontal", mode="determinate")
+        self.progress_bar.grid(row=1, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
+        self.progress_bar.grid_forget()
 
     def create_widgets(self):
         self.create_left_panel()
@@ -24,42 +31,43 @@ class YouTubeDownloaderUI(tk.Tk):
         frame = tk.Frame(self, padx=10, pady=10)
         frame.grid(row=0, column=0, sticky="nsew")
 
-        tk.Label(frame, text="Output Folder:").pack(anchor="w")
+        ttk.Label(frame, text="Output Folder:").pack(anchor="w")
         self.output_path_var = tk.StringVar()
-        tk.Label(frame, textvariable=self.output_path_var, relief="sunken", width=30).pack(fill="x", pady=(0, 10))
-        tk.Button(frame, text="Browse...", command=self.select_output_folder).pack(fill="x")
+        ttk.Label(frame, textvariable=self.output_path_var, relief="sunken", width=30).pack(fill="x", pady=(0, 10))
+        ttk.Button(frame, text="Browse...", command=self.select_output_folder).pack(fill="x")
 
-        tk.Label(frame, text="Download Format:").pack(anchor="w", pady=(20, 0))
+        ttk.Label(frame, text="Download Format:").pack(anchor="w", pady=(20, 0))
         self.mp3_var = tk.BooleanVar(value=True)
         self.mp4_var = tk.BooleanVar(value=False)
-        tk.Checkbutton(frame, text="MP3", variable=self.mp3_var).pack(anchor="w")
-        tk.Checkbutton(frame, text="MP4", variable=self.mp4_var).pack(anchor="w")
+        ttk.Checkbutton(frame, text="MP3", variable=self.mp3_var).pack(anchor="w")
+        ttk.Checkbutton(frame, text="MP4", variable=self.mp4_var).pack(anchor="w")
 
         button_frame = tk.Frame(frame)
         button_frame.pack(fill="x", pady=(20, 0))
-        tk.Button(button_frame, text="Start", command=self.start_download).pack(side="left", expand=True, fill="x", padx=(0, 5))
-        tk.Button(button_frame, text="Cancel", command=self.cancel_download).pack(side="left", expand=True, fill="x", padx=(5, 0))
+        ttk.Button(button_frame, text="Start", command=self.start_download).pack(side="left", expand=True, fill="x", padx=(0, 5))
+        ttk.Button(button_frame, text="Cancel", command=self.cancel_download).pack(side="left", expand=True, fill="x", padx=(5, 0))
 
     def create_right_panel(self):
         frame = tk.Frame(self, padx=10, pady=10)
         frame.grid(row=0, column=1, sticky="nsew")
 
-        tk.Label(frame, text="Video URLs:").pack(anchor="w")
+        ttk.Label(frame, text="Video URLs:").pack(anchor="w")
         list_frame = tk.Frame(frame)
         list_frame.pack(fill="both", expand=True)
 
         self.urls_listbox = tk.Listbox(list_frame)
         self.urls_listbox.pack(side="left", fill="both", expand=True)
 
-        scrollbar = tk.Scrollbar(list_frame, orient="vertical", command=self.urls_listbox.yview)
+        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.urls_listbox.yview)
         scrollbar.pack(side="right", fill="y")
         self.urls_listbox.config(yscrollcommand=scrollbar.set)
 
-        entry_frame = tk.Frame(frame)
+        entry_frame = ttk.Frame(frame)
         entry_frame.pack(fill="x", pady=(10, 0))
-        self.url_entry = tk.Entry(entry_frame)
+        self.url_entry = ttk.Entry(entry_frame)
+        self.url_entry.bind("<Return>", lambda event: self.add_url())
         self.url_entry.pack(side="left", fill="x", expand=True)
-        tk.Button(entry_frame, text="Add", command=self.add_url).pack(side="left", padx=(5, 0))
+        ttk.Button(entry_frame, text="Add", command=self.add_url).pack(side="left", padx=(5, 0))
 
     def select_output_folder(self):
         path = filedialog.askdirectory()
@@ -135,3 +143,6 @@ class YouTubeDownloaderUI(tk.Tk):
         #print(d)  # You can update this to a real progress bar later
         print(f"Progress: {d.get('downloaded_bytes', 0)} bytes downloaded.")
 
+if __name__ == "__main__":
+    app = YouTubeDownloaderUI()
+    app.mainloop()
