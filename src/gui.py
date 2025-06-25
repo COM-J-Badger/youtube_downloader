@@ -12,20 +12,19 @@ class YouTubeDownloaderUI(tk.Tk):
         self.title("YouTube Downloader")
         self.geometry("700x400")
 
-        self.grid_columnconfigure(0, weight=1, uniform="group1")
-        self.grid_columnconfigure(1, weight=1, uniform="group1")
+        #Left/Right columns and size (Respectively)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
 
-        self.create_widgets()
+        self.create_left_panel()
+        self.create_right_panel()
 
         self.iconphoto(False, tk.PhotoImage(file="./assets/D_ Icon Cropped.png"))
 
         self.progress_bar = ttk.Progressbar(self, orient="horizontal", mode="determinate")
         self.progress_bar.grid(row=1, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
         self.progress_bar.grid_forget()
-
-    def create_widgets(self):
-        self.create_left_panel()
-        self.create_right_panel()
+        
 
     def create_left_panel(self):
         frame = tk.Frame(self, padx=10, pady=10)
@@ -44,8 +43,8 @@ class YouTubeDownloaderUI(tk.Tk):
 
         button_frame = tk.Frame(frame)
         button_frame.pack(fill="x", pady=(20, 0))
-        ttk.Button(button_frame, text="Start", command=self.start_download).pack(side="left", expand=True, fill="x", padx=(0, 5))
-        ttk.Button(button_frame, text="Cancel", command=self.cancel_download).pack(side="left", expand=True, fill="x", padx=(5, 0))
+        ttk.Button(button_frame, text="Start", command=self.start_download).pack(side=tk.LEFT, expand=True, fill="x", padx=(0, 5))
+        ttk.Button(button_frame, text="Cancel", command=self.cancel_download).pack(side=tk.LEFT, expand=True, fill="x", padx=(5, 0))
 
     def create_right_panel(self):
         frame = tk.Frame(self, padx=10, pady=10)
@@ -56,18 +55,18 @@ class YouTubeDownloaderUI(tk.Tk):
         list_frame.pack(fill="both", expand=True)
 
         self.urls_listbox = tk.Listbox(list_frame)
-        self.urls_listbox.pack(side="left", fill="both", expand=True)
+        self.urls_listbox.pack(side=tk.LEFT, fill="both", expand=True)
 
-        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.urls_listbox.yview)
-        scrollbar.pack(side="right", fill="y")
+        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.urls_listbox.yview)
+        scrollbar.pack(side=tk.RIGHT, fill="y")
         self.urls_listbox.config(yscrollcommand=scrollbar.set)
 
         entry_frame = ttk.Frame(frame)
         entry_frame.pack(fill="x", pady=(10, 0))
         self.url_entry = ttk.Entry(entry_frame)
         self.url_entry.bind("<Return>", lambda event: self.add_url())
-        self.url_entry.pack(side="left", fill="x", expand=True)
-        ttk.Button(entry_frame, text="Add", command=self.add_url).pack(side="left", padx=(5, 0))
+        self.url_entry.pack(side=tk.LEFT, fill="x", expand=True)
+        ttk.Button(entry_frame, text="Add", command=self.add_url).pack(side=tk.LEFT, padx=(5, 0))
 
     def select_output_folder(self):
         path = filedialog.askdirectory()
@@ -82,27 +81,25 @@ class YouTubeDownloaderUI(tk.Tk):
         else:
             messagebox.showwarning("Input Error", "Please enter a valid URL.")
 
-    
-
     def start_download(self):
-        selected_format_mp3 = self.mp3_var.get()
-        selected_format_mp4 = self.mp4_var.get()
         output_path = self.output_path_var.get()
 
         if not output_path:
             messagebox.showwarning("Output Folder", "Please select an output folder.")
             return
 
-        if not (selected_format_mp3 or selected_format_mp4):
+        if not (self.mp3_var or self.mp4_var):
             messagebox.showwarning("Format", "Please select at least one download format (MP3 or MP4).")
             return
 
         # Run in a background thread
-        threading.Thread(target=self._process_download_queue, args=(selected_format_mp3, selected_format_mp4, output_path), daemon=True).start()
+        threading.Thread(target=self._process_download_queue, args=(self.mp3_var, self.mp4_var, output_path), daemon=True).start()
 
     def _process_download_queue(self, as_mp3, as_mp4, output_path):
         total = self.urls_listbox.size()
-        index = 0
+        queue_size = self.urls_listbox.size()
+        self.progress_bar['value'] = 0
+        self.progress_bar.grid()
 
         error_urls = []
 
@@ -123,6 +120,7 @@ class YouTubeDownloaderUI(tk.Tk):
             finally:
                 # Remove from Listbox after processing
                 self.urls_listbox.delete(0)
+                self.progress_bar['value'] += (1 / queue_size) * 100
 
         messagebox.showinfo(f"Download Complete", f"{total} URLs processed.\n"
         f"Errors: {len(error_urls)}" if error_urls else "All downloads completed successfully.")
@@ -140,7 +138,6 @@ class YouTubeDownloaderUI(tk.Tk):
         messagebox.showinfo("Cancel", "Download cancelled.")
 
     def print_progress(self, d):
-        #print(d)  # You can update this to a real progress bar later
         print(f"Progress: {d.get('downloaded_bytes', 0)} bytes downloaded.")
 
 if __name__ == "__main__":
