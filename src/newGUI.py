@@ -21,6 +21,8 @@ root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
 message = tk.Label(root, text="This is a message")
 message.pack()
 
+root.iconphoto(False, tk.PhotoImage(file="./assets/D_ Icon Cropped.png"))
+
 # keep the window displaying
 try:
     from ctypes import windll
